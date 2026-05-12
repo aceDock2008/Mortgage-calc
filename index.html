@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高級房貸試算工具 - 專業財務規劃</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Noto+Sans+TC:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#6366f1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icon.png">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --secondary: #ec4899;
+            --bg: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(236, 72, 153, 0.1) 0%, transparent 40%);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 2rem 1rem;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #818cf8, #f472b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 968px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 1.5rem;
+            padding: 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        input {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 0.75rem 1rem;
+            color: white;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        .extra-repayment-section {
+            margin-top: 2rem;
+            border-top: 1px solid var(--border);
+            padding-top: 1.5rem;
+        }
+
+        .extra-repayment-item {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+            align-items: flex-end;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .btn {
+            cursor: pointer;
+            border: none;
+            border-radius: 0.75rem;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            font-size: 0.85rem;
+            padding: 0.5rem 1rem;
+        }
+
+        .btn-outline:hover {
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            padding: 0.75rem;
+        }
+
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.3);
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .summary-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .summary-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-top: 0.5rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-bottom: 2rem;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-top: 2rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        td {
+            padding: 1rem 0.75rem;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap; /* Prevent text wrapping */
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.4rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            white-space: nowrap;
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 0.5rem;
+        }
+
+        .badge-grace {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+        }
+
+        .badge-extra {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>房貸試算專家的計算機</h1>
+            <p class="subtitle">精準計算您的每一分還款，規劃理想未來</p>
+        </header>
+
+        <div class="grid">
+            <!-- Sidebar: Inputs -->
+            <aside>
+                <div class="card">
+                    <div class="input-group">
+                        <label for="loanAmount">貸款金額 (萬元)</label>
+                        <input type="number" id="loanAmount" value="1000" step="10">
+                    </div>
+                    <div class="input-group">
+                        <label for="interestRate">年利率 (%)</label>
+                        <input type="number" id="interestRate" value="2.1" step="0.01">
+                    </div>
+                    <div class="input-group">
+                        <label for="loanTerm">貸款年限 (年)</label>
+                        <input type="number" id="loanTerm" value="30" step="1">
+                    </div>
+                    <div class="input-group">
+                        <label for="startDate">開始繳納日期</label>
+                        <input type="date" id="startDate">
+                    </div>
+                    <div class="input-group">
+                        <label for="gracePeriod">寬限期 (月)</label>
+                        <input type="number" id="gracePeriod" value="0" step="1">
+                    </div>
+
+                    <div class="extra-repayment-section">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <label style="margin-bottom: 0;">額外還款計畫</label>
+                            <button class="btn btn-outline" onclick="addExtraRepayment()">+ 新增</button>
+                        </div>
+                        <div id="extraRepaymentsContainer">
+                            <!-- Extra repayment items will be added here -->
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="calculate()">立即試算</button>
+                </div>
+            </aside>
+
+            <!-- Main Content: Results -->
+            <main>
+                <div class="summary-grid">
+                    <div class="summary-card">
+                        <label>每月還款 (首期)</label>
+                        <div class="summary-value" id="monthlyPaymentResult">NT$ 0</div>
+                    </div>
+                    <div class="summary-card">
+                        <label>總利息支出</label>
+                        <div class="summary-value" id="totalInterestResult">NT$ 0</div>
+                    </div>
+                    <div class="summary-card">
+                        <label>總還款金額</label>
+                        <div class="summary-value" id="totalPaymentResult">NT$ 0</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="chart-container">
+                        <canvas id="repaymentChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 2rem;">
+                    <h3>每月攤還明細</h3>
+                    <div class="table-container">
+                        <table id="amortizationTable">
+                            <thead>
+                                <tr>
+                                    <th>期數</th>
+                                    <th>日期</th>
+                                    <th>本金</th>
+                                    <th>利息</th>
+                                    <th>額外還款</th>
+                                    <th>當期總額</th>
+                                    <th>累積還款額</th>
+                                    <th>剩餘本金</th>
+                                </tr>
+                            </thead>
+                            <tbody id="amortizationBody">
+                                <!-- Table rows will be added here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        let myChart = null;
+
+        // Initialize default start date to today
+        document.getElementById('startDate').valueAsDate = new Date();
+
+        function addExtraRepayment(type = 'single', monthStart = '', monthEnd = '', amount = '') {
+            const container = document.getElementById('extraRepaymentsContainer');
+            const div = document.createElement('div');
+            div.className = 'extra-repayment-item-wrapper'; // New class for better styling
+            div.style.marginBottom = '1.5rem';
+            div.style.padding = '1rem';
+            div.style.background = 'rgba(255, 255, 255, 0.05)';
+            div.style.borderRadius = '1rem';
+            div.style.position = 'relative';
+
+            div.innerHTML = `
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <select class="extra-type" style="background: #1e293b; color: white; border: 1px solid var(--border); border-radius: 0.5rem; padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                        <option value="single" ${type === 'single' ? 'selected' : ''}>單次還款</option>
+                        <option value="range" ${type === 'range' ? 'selected' : ''}>週期還款</option>
+                    </select>
+                    <button class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" onclick="this.parentElement.parentElement.remove(); calculate();">✕ 移除</button>
+                </div>
+                <div class="extra-inputs-container" style="display: flex; gap: 0.5rem; align-items: flex-end;">
+                    <!-- Inputs injected here -->
+                </div>
+            `;
+
+            container.appendChild(div);
+
+            const typeSelect = div.querySelector('.extra-type');
+            const inputContainer = div.querySelector('.extra-inputs-container');
+
+            function updateInputs() {
+                const currentType = typeSelect.value;
+                if (currentType === 'single') {
+                    inputContainer.innerHTML = `
+                        <div style="flex: 1;">
+                            <label style="font-size: 0.75rem;">期數</label>
+                            <input type="number" class="extra-month-start" value="${monthStart}" placeholder="期數">
+                        </div>
+                        <div style="flex: 1;">
+                            <label style="font-size: 0.75rem;">金額 (萬元)</label>
+                            <input type="number" class="extra-amount" value="${amount}" placeholder="萬元">
+                        </div>
+                    `;
+                } else {
+                    inputContainer.innerHTML = `
+                        <div style="flex: 1;">
+                            <label style="font-size: 0.75rem;">從期數</label>
+                            <input type="number" class="extra-month-start" value="${monthStart}" placeholder="開始">
+                        </div>
+                        <div style="flex: 1;">
+                            <label style="font-size: 0.75rem;">至期數</label>
+                            <input type="number" class="extra-month-end" value="${monthEnd}" placeholder="結束">
+                        </div>
+                        <div style="flex: 1;">
+                            <label style="font-size: 0.75rem;">每期金額 (萬)</label>
+                            <input type="number" class="extra-amount" value="${amount}" placeholder="萬元">
+                        </div>
+                    `;
+                }
+                
+                // Add event listeners to new inputs
+                div.querySelectorAll('input').forEach(input => {
+                    input.addEventListener('change', calculate);
+                });
+            }
+
+            typeSelect.addEventListener('change', () => {
+                updateInputs();
+                calculate();
+            });
+
+            updateInputs();
+        }
+
+        function calculate() {
+            // Get inputs
+            const loanAmountWan = parseFloat(document.getElementById('loanAmount').value);
+            const loanAmount = loanAmountWan * 10000;
+            const annualRate = parseFloat(document.getElementById('interestRate').value);
+            const years = parseInt(document.getElementById('loanTerm').value);
+            const graceMonths = parseInt(document.getElementById('gracePeriod').value) || 0;
+            const startDate = new Date(document.getElementById('startDate').value);
+            
+            const totalMonths = years * 12;
+            const monthlyRate = annualRate / 12 / 100;
+
+            // Extra repayments mapping
+            const extras = {};
+            const extraLogForStorage = [];
+            document.querySelectorAll('.extra-repayment-item-wrapper').forEach(item => {
+                const type = item.querySelector('.extra-type').value;
+                const mStart = parseInt(item.querySelector('.extra-month-start').value);
+                const amount = parseFloat(item.querySelector('.extra-amount').value) * 10000;
+                
+                if (type === 'single') {
+                    if (mStart > 0 && amount > 0) {
+                        extras[mStart] = (extras[mStart] || 0) + amount;
+                        extraLogForStorage.push({ type, mStart, amount: amount / 10000 });
+                    }
+                } else {
+                    const mEnd = parseInt(item.querySelector('.extra-month-end').value);
+                    if (mStart > 0 && mEnd >= mStart && amount > 0) {
+                        for (let i = mStart; i <= mEnd; i++) {
+                            extras[i] = (extras[i] || 0) + amount;
+                        }
+                        extraLogForStorage.push({ type, mStart, mEnd, amount: amount / 10000 });
+                    }
+                }
+            });
+
+            // Save to localStorage
+            saveToLocalStorage({
+                loanAmountWan,
+                annualRate,
+                years,
+                graceMonths,
+                startDate: document.getElementById('startDate').value,
+                extras: extraLogForStorage
+            });
+
+            let balance = loanAmount;
+            let totalInterest = 0;
+            let schedule = [];
+            
+            // Standard formula: M = P [ i(1 + i)^n ] / [ (1 + i)^n – 1 ]
+            function getMonthlyPayment(P, r, n) {
+                if (r === 0) return P / n;
+                return P * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+            }
+
+            let currentMonthlyRepayment = getMonthlyPayment(balance, monthlyRate, totalMonths - graceMonths);
+
+            for (let m = 1; m <= totalMonths; m++) {
+                if (balance <= 0) break;
+
+                let interest = balance * monthlyRate;
+                let principal = 0;
+                let extra = extras[m] || 0;
+                let isGrace = m <= graceMonths;
+
+                if (isGrace) {
+                    principal = 0;
+                } else {
+                    // Recalculate monthly payment if principal was changed by extra payment in previous months
+                    // (Actually, to simplify and match bank behavior, we recalculate based on current balance and remaining months)
+                    principal = currentMonthlyRepayment - interest;
+                }
+
+                // Adjust if balance is less than principal
+                if (principal > balance) principal = balance;
+                
+                balance -= (principal + extra);
+                if (balance < 0) {
+                    // If extra payment overpays
+                    extra += balance; // Adjust extra to just reach zero
+                    balance = 0;
+                }
+
+                totalInterest += interest;
+
+                // Create date for this month
+                let payDate = new Date(startDate);
+                payDate.setMonth(startDate.getMonth() + m - 1);
+
+                schedule.push({
+                    month: m,
+                    date: payDate.toISOString().split('T')[0],
+                    principal,
+                    interest,
+                    extra,
+                    total: principal + interest + extra,
+                    balance,
+                    isGrace
+                });
+
+                // Recalculate monthly payment for remaining months after an extra payment
+                if (extra > 0 && m < totalMonths && !isGrace) {
+                    currentMonthlyRepayment = getMonthlyPayment(balance, monthlyRate, totalMonths - m);
+                }
+                // If extra payment during grace, we don't recalculate 'currentMonthlyRepayment' yet, 
+                // but we should when grace ends
+                if (m === graceMonths) {
+                    currentMonthlyRepayment = getMonthlyPayment(balance, monthlyRate, totalMonths - graceMonths);
+                }
+            }
+
+            updateUI(schedule, totalInterest, loanAmount);
+        }
+
+        function updateUI(schedule, totalInterest, initialLoan) {
+            // Summary
+            const firstRegular = schedule.find(s => !s.isGrace) || schedule[0];
+            document.getElementById('monthlyPaymentResult').innerText = `NT$ ${Math.round(firstRegular.total).toLocaleString()}`;
+            document.getElementById('totalInterestResult').innerText = `NT$ ${Math.round(totalInterest).toLocaleString()}`;
+            document.getElementById('totalPaymentResult').innerText = `NT$ ${Math.round(initialLoan + totalInterest).toLocaleString()}`;
+
+            // Table
+            const body = document.getElementById('amortizationBody');
+            body.innerHTML = '';
+            let cumulativeTotal = 0;
+            schedule.forEach(s => {
+                cumulativeTotal += s.total;
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${s.month}</td>
+                    <td>${s.date}</td>
+                    <td>${Math.round(s.principal).toLocaleString()}</td>
+                    <td>${Math.round(s.interest).toLocaleString()}</td>
+                    <td>${s.extra > 0 ? `<span class="badge badge-extra">${Math.round(s.extra).toLocaleString()}</span>` : '-'}</td>
+                    <td>${Math.round(s.total).toLocaleString()} ${s.isGrace ? '<span class="badge badge-grace">寬限</span>' : ''}</td>
+                    <td>${Math.round(cumulativeTotal).toLocaleString()}</td>
+                    <td>${Math.round(s.balance).toLocaleString()}</td>
+                `;
+                body.appendChild(row);
+            });
+
+            // Chart
+            updateChart(schedule);
+        }
+
+        function updateChart(schedule) {
+            const ctx = document.getElementById('repaymentChart').getContext('2d');
+            const labels = schedule.map(s => `第 ${s.month} 期`);
+            const balances = schedule.map(s => s.balance);
+            const interests = schedule.map(s => s.interest);
+            const principals = schedule.map(s => s.principal + s.extra);
+
+            if (myChart) myChart.destroy();
+
+            myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: '剩餘本金',
+                            data: balances,
+                            borderColor: '#6366f1',
+                            backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                            fill: true,
+                            yAxisID: 'y',
+                            tension: 0.4
+                        },
+                        {
+                            label: '累計本金還款',
+                            type: 'bar',
+                            data: schedule.map((s, i) => schedule.slice(0, i+1).reduce((acc, curr) => acc + curr.principal + curr.extra, 0)),
+                            backgroundColor: 'rgba(16, 185, 129, 0.5)',
+                            yAxisID: 'y'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: '#94a3b8' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#94a3b8', maxRotation: 45, autoSkip: true, maxTicksLimit: 20 }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: { color: '#f8fafc' }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                            titleColor: '#f8fafc',
+                            bodyColor: '#94a3b8',
+                            borderColor: 'rgba(255, 255, 255, 0.1)',
+                            borderWidth: 1
+                        }
+                    }
+                }
+            });
+        }
+
+        function saveToLocalStorage(data) {
+            localStorage.setItem('mortgage_params', JSON.stringify(data));
+        }
+
+        function loadFromLocalStorage() {
+            const data = localStorage.getItem('mortgage_params');
+            if (data) {
+                const params = JSON.parse(data);
+                document.getElementById('loanAmount').value = params.loanAmountWan;
+                document.getElementById('interestRate').value = params.annualRate;
+                document.getElementById('loanTerm').value = params.years;
+                document.getElementById('startDate').value = params.startDate;
+                document.getElementById('gracePeriod').value = params.graceMonths;
+                
+                if (params.extras) {
+                    params.extras.forEach(e => {
+                        if (e.type === 'range') {
+                            addExtraRepayment('range', e.mStart, e.mEnd, e.amount);
+                        } else {
+                            // Support old data format or single
+                            addExtraRepayment('single', e.mStart || e.month, '', e.amount);
+                        }
+                    });
+                }
+                
+                calculate();
+            } else {
+                calculate();
+            }
+        }
+
+        // Event listeners for inputs
+        document.querySelectorAll('input:not(.extra-month):not(.extra-amount)').forEach(input => {
+            input.addEventListener('change', calculate);
+        });
+
+        // Load on start
+        window.onload = () => {
+            loadFromLocalStorage();
+            
+            // Register Service Worker for PWA
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('sw.js')
+                    .then(() => console.log('Service Worker Registered'))
+                    .catch(err => console.log('Service Worker Failed', err));
+            }
+        };
+    </script>
+</body>
+</html>
